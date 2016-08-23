@@ -2,9 +2,9 @@
  *
  * isyq
  * 8/23/2016
- * V1.0.0.0
+ * V1.0.0.1
  *
- * Used to printf LOG information over UART
+ * A UART logger component.
  *
  * ========================================
 */
@@ -29,9 +29,6 @@
  */
 #define UART_BUSY          while(0 != (CyUart_SpiUartGetTxBufferSize() + CyUart_GET_TX_FIFO_SR_VALID))
 
-    
-#define UART_VALID_BAUD_RATE_SIZE       (10u)
-    
 typedef enum {
     UART_BAUD_RATE_110              = 110u,
     UART_BAUD_RATE_300              = 300u,
@@ -39,6 +36,9 @@ typedef enum {
     UART_BAUD_RATE_2400             = 2400u,
     UART_BAUD_RATE_4800             = 4800u,
     UART_BAUD_RATE_9600             = 9600u,
+    UART_BAUD_RATE_19200            = 19200u,
+    UART_BAUD_RATE_38400            = 38400u,
+    UART_BAUD_RATE_57600            = 57600u,
     UART_BAUD_RATE_115200           = 115200u,
     UART_BAUD_RATE_230400           = 230400u,
     UART_BAUD_RATE_460800           = 460800u,
