@@ -152,7 +152,7 @@ void logger_format(logger_level_t level, const char* file, const char* function,
     UART_PUTS(file);
     UART_PUTS(">");
     UART_PUTS(function);
-    UART_PUTS(": ");
+    UART_PUTS("(): ");
     UART_BUSY;
     
     va_list args;
