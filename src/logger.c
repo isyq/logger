@@ -64,17 +64,19 @@ void logger_init(void)
     }
 }
 
-void logger_start(logger_config_t* config)
+void logger_start(uart_baud_rate_t baudRate, logger_level_t level)
 {
-    memcpy(&loggerConfig, config, sizeof(logger_config_t));
+    loggerConfig.baudRate = baudRate;
+    loggerConfig.level = level;
+    loggerConfig.heapSize = CYDEV_HEAP_SIZE;
+
+    logger_init();
     
     /* || loggerConfig.heapSize > 0x5BB */
     if (loggerConfig.heapSize < 0x200) {
         UART_PUTS("ERROR: Heap size is not suitable.\r\n");
         CYASSERT(0);
     }
-    
-    logger_init();
 }
 
 void logger_stop(void)

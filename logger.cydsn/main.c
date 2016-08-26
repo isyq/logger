@@ -16,16 +16,11 @@ int main()
 {
     CyGlobalIntEnable;
     
-    logger_config_t loggerConfig = {
-        .baudRate = UART_BAUD_RATE_115200,
-        .level    = LOGGER_LEVEL_TRACE,
-        .heapSize = CYDEV_HEAP_SIZE,
-    };
-    logger_start(&loggerConfig);
+    logger_start(UART_BAUD_RATE_115200, LOGGER_LEVEL_TRACE);
     
     uint8 testData[10] = {100, 101, 102, 103, 104, 105, 106, 107, 108, 109};
     logger_byte(LOGGER_DATA_TYPE_BIN, 0xF1);
-    logger_array(LOGGER_DATA_TYPE_HEX, testData, 10, '_');
+    logger_array('x', testData, 10, '_');
     logger_p("\r\nHello World %x %c %s\r\n", 100, 'A', "GOOD");
     logger_trace("Hello World %x %c %s\r\n", 100, 'A', "GOOD");
     logger_trace("Hello World %x %c %s\r\n", 100, 'A', "GOOD");

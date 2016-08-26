@@ -46,9 +46,9 @@ typedef enum {
 } uart_baud_rate_t;
 
 typedef enum {
-    LOGGER_DATA_TYPE_BIN,
-    LOGGER_DATA_TYPE_DEC,
-    LOGGER_DATA_TYPE_HEX,
+    LOGGER_DATA_TYPE_BIN = 'b',
+    LOGGER_DATA_TYPE_DEC = 'd',
+    LOGGER_DATA_TYPE_HEX = 'x',
 } logger_data_type_t;
 
 
@@ -67,7 +67,7 @@ typedef struct {
 /* Set global log level */
 #define DEFAULT_LOGGER_LEVEL        LOGGER_LEVEL_TRACE
 
-void logger_start(logger_config_t* config);
+void logger_start(uart_baud_rate_t baudRate, logger_level_t level);
 void logger_byte(logger_data_type_t type, uint8 data);
 void logger_array(logger_data_type_t type, const uint8* data, uint8 len, char seperator);
 void logger_raw(logger_level_t level, const char* format, ...);
@@ -75,7 +75,7 @@ void logger_format(logger_level_t level, const char* file, const char* function,
 
 
 /* Interfaces to print user message. */
-#define logger_p(...)       logger_raw(LOGGER_LEVEL_TRACE, __VA_ARGS__)
+#define logger_p(...)        logger_raw(LOGGER_LEVEL_TRACE, __VA_ARGS__)
 
 #define logger_trace(...)    logger_format(LOGGER_LEVEL_TRACE, __FILE__, __FUNCTION__, __VA_ARGS__)
 #define logger_error(...)    logger_format(LOGGER_LEVEL_ERROR, __FILE__, __FUNCTION__, __VA_ARGS__)
