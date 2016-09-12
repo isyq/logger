@@ -2,7 +2,7 @@
  *
  * isyq
  * 8/30/2016
- * V1.3.0.1
+ * V1.3.0.0
  *
  * A UART logger component.
  *

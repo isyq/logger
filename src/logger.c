@@ -2,7 +2,7 @@
  *
  * isyq
  * 8/23/2016
- * V1.0.0.1
+ * V1.3.0.0
  *
  * A UART logger component.
  *
@@ -431,7 +431,7 @@ int _write(int file, char *ptr, int len)
         UART_PUTC(*ptr++);
     }
     
-    UART_BUSY;
+    UART_BUSY;          /* Make sure all data in buffer is sent */
     return len;
 }
 
