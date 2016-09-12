@@ -72,9 +72,10 @@ extern logger_t     logger;
 void logger_start(logger_level_t level, uart_baud_rate_t baudRate);
 void logger_array(const uint8* data, uint16 len);
 
+void logger_raw(logger_level_t level, const char* format, ...);
 void logger_format(logger_level_t level, const char* file, const char* function, const char* format, ...);
 /* This is for debug use */
 #define p(...)      logger_format(LOGGER_LEVEL_DEBUG, __FILE__, __FUNCTION__, __VA_ARGS__)
-
+#define i(...)      logger_raw(LOGGER_LEVEL_DEBUG, __VA_ARGS__)
 
 #endif /* __LOG_H__ */
