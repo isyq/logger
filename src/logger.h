@@ -1,8 +1,8 @@
 /* ========================================
  *
  * isyq
- * 8/23/2016
- * V1.0.0.1
+ * 8/30/2016
+ * V1.3.0.1
  *
  * A UART logger component.
  *
@@ -24,9 +24,7 @@
 #define UARTCLK_START      CyUartClk_Start
 #define UARTCLK_STOP       CyUartClk_Stop
     
-/* Wait TX transaction complete, TX_FIFO_SR_VALID 
- * means no byte is sending at the moment.
- */
+/* Wait TX transaction complete, TX_FIFO_SR_VALID means no byte is sending at the moment. */
 #define UART_BUSY          while(0 != (CyUart_SpiUartGetTxBufferSize() + CyUart_GET_TX_FIFO_SR_VALID))
 
 typedef enum {
@@ -46,16 +44,11 @@ typedef enum {
 } uart_baud_rate_t;
 
 typedef enum {
-    LOGGER_DATA_TYPE_BIN = 'b',
-    LOGGER_DATA_TYPE_DEC = 'd',
-    LOGGER_DATA_TYPE_HEX = 'x',
-} logger_data_type_t;
-
-
-typedef enum {
+    LOGGER_LEVEL_DISABLE,
     LOGGER_LEVEL_FATAL,
     LOGGER_LEVEL_ERROR,
     LOGGER_LEVEL_TRACE,
+    LOGGER_LEVEL_DEBUG,
 } logger_level_t;
 
 typedef struct {
@@ -64,22 +57,24 @@ typedef struct {
     uint16             heapSize;
 } logger_config_t;
 
-/* Set global log level */
-#define DEFAULT_LOGGER_LEVEL        LOGGER_LEVEL_TRACE
+typedef void (*logger_callback)(const char* format, ...);
 
-void logger_start(uart_baud_rate_t baudRate, logger_level_t level);
-void logger_byte(logger_data_type_t type, uint8 data);
-void logger_array(logger_data_type_t type, const uint8* data, uint8 len, char seperator);
-void logger_raw(logger_level_t level, const char* format, ...);
+typedef struct {
+    logger_config_t config;
+    logger_callback t;
+    logger_callback e;
+    logger_callback f;
+} logger_t;
+
+/* This is main interface */
+extern logger_t     logger;
+
+void logger_start(logger_level_t level, uart_baud_rate_t baudRate);
+void logger_array(const uint8* data, uint16 len);
+
 void logger_format(logger_level_t level, const char* file, const char* function, const char* format, ...);
-
-
-/* Interfaces to print user message. */
-#define logger_p(...)        logger_raw(LOGGER_LEVEL_TRACE, __VA_ARGS__)
-
-#define logger_trace(...)    logger_format(LOGGER_LEVEL_TRACE, __FILE__, __FUNCTION__, __VA_ARGS__)
-#define logger_error(...)    logger_format(LOGGER_LEVEL_ERROR, __FILE__, __FUNCTION__, __VA_ARGS__)
-#define logger_fatal(...)    logger_format(LOGGER_LEVEL_FATAL, __FILE__, __FUNCTION__, __VA_ARGS__)
+/* This is for debug use */
+#define p(...)      logger_format(LOGGER_LEVEL_DEBUG, __FILE__, __FUNCTION__, __VA_ARGS__)
 
 
 #endif /* __LOG_H__ */

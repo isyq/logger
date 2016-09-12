@@ -14,14 +14,279 @@
 #include "cyfitter.h"
 #include "logger.h"
 
+/* Max buffer length */
 #define MAX_LOGGER_BUFFER_SIZE              (128u)
 
-static _Bool            hasLoggerInitialized = 0;
-static logger_config_t  loggerConfig;
+static _Bool            hasLoggerInitialized;   /* Ensure logger is initialized only once */
+static logger_config_t  loggerConfig;           /* Global config variable */
 
+logger_t    logger;                             /* Global logger */
+
+/* Nibble of a char */
 const char HEX_CHAR_TABLE[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F',};
-static char LOGGER_LEVEL_PREAMBLE[] = {'F','E','T'};
 
+/*******************************************************************************
+* Function Name: logger_array
+********************************************************************************
+*
+* Summary:
+*  Print array data. It's ended with \r\n.
+*
+* Parameters:
+*  data: pointer of data
+*  len: length of data
+*
+* Returns:
+*  None
+*
+*
+*******************************************************************************/
+void logger_array(const uint8* data, uint16 len)
+{
+    if (!hasLoggerInitialized) {
+        return;   
+    }
+    
+    if (LOGGER_LEVEL_TRACE > loggerConfig.level) {
+        return;   
+    }    
+    
+    if (data == NULL || len <= 0) {
+        return;   
+    }
+    
+    char seperator = ' ';
+    
+    uint16 i;
+    for (i = 0; i < len; i++) {
+        UART_PUTC(HEX_CHAR_TABLE[(data[i] >> 4) & 0x0F]);
+        UART_PUTC(HEX_CHAR_TABLE[(data[i]) & 0x0F]);
+        if (i != len - 1) {
+            UART_PUTC(seperator);
+        }
+    }
+
+    UART_PUTC('\r');
+    UART_PUTC('\n');
+
+    /* Make sure all data in the buffer is sent */
+    UART_BUSY;
+}
+
+/*******************************************************************************
+* Function Name: logger_raw
+********************************************************************************
+*
+* Summary:
+*  Print information with special logger level.
+*
+* Parameters:
+*  level: logger level.
+*  format: format string like 'printf'.
+*  ...: variable parameters.
+*
+* Returns:
+*  None
+*
+*
+*******************************************************************************/
+void logger_raw(logger_level_t level, const char* format, ...)
+{
+    if (!hasLoggerInitialized) {
+        return;   
+    }
+    
+    if (level > loggerConfig.level) {
+        return;   
+    }
+    
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);          /* printf perform at '\n' */
+    va_end(args);
+    
+    /* Print all data in buffer, even not ended with '\n'.
+     * Note, this funciton is only valid in GCC compiler.
+     */    
+    fflush(stdout);
+}
+
+/*******************************************************************************
+* Function Name: logger_format
+********************************************************************************
+*
+* Summary:
+*  Print information with file and function location.
+*
+* Parameters:
+*  level: logger level.
+*  file: file where calling this function.
+*  function: function where calling this API.
+*  format: format string like 'printf'.
+*  ...: variable parameters.
+*
+* Returns:
+*  None
+*
+*
+*******************************************************************************/
+void logger_format(logger_level_t level, const char* file, const char* function, const char* format, ...)
+{    
+    if (!hasLoggerInitialized) {
+        return;   
+    }
+    
+    if (level > loggerConfig.level) {
+        return;   
+    }
+    
+    /* Print format text. */
+    UART_PUTS(file);
+    UART_PUTS("->");
+    UART_PUTS(function);
+    UART_PUTS("(): ");
+    UART_BUSY;
+    
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);      /* printf perform at '\n' */
+    va_end(args);
+    
+    /* Print all data in buffer, even not ended with '\n'.
+     * Note, this funciton is only valid in GCC compiler.
+     */
+    fflush(stdout);
+}
+
+/*******************************************************************************
+* Function Name: logger_trace
+********************************************************************************
+*
+* Summary:
+*  Print trace information.
+*
+* Parameters:
+*  format: format string like 'printf'.
+*  ...: variable parameters.
+*
+* Returns:
+*  None
+*
+*
+*******************************************************************************/
+void logger_trace(const char* format, ...)
+{
+    if (!hasLoggerInitialized) {
+        return;   
+    }
+    
+    if (loggerConfig.level < LOGGER_LEVEL_TRACE) {
+        return;   
+    }
+    
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);      /* printf perform at '\n' */
+    va_end(args);
+    
+    /* Print all data in buffer, even not ended with '\n'.
+     * Note, this funciton is only valid in GCC compiler.
+     */
+    fflush(stdout); 
+}
+
+/*******************************************************************************
+* Function Name: logger_error
+********************************************************************************
+*
+* Summary:
+*  Print error information.
+*
+* Parameters:
+*  format: format string like 'printf'.
+*  ...: variable parameters.
+*
+* Returns:
+*  None
+*
+*
+*******************************************************************************/
+void logger_error(const char* format, ...)
+{
+    if (!hasLoggerInitialized) {
+        return;   
+    }
+    
+    if (loggerConfig.level < LOGGER_LEVEL_ERROR) {
+        return;   
+    }
+    
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);      /* printf perform at '\n' */
+    va_end(args);
+    
+    /* Print all data in buffer, even not ended with '\n'.
+     * Note, this funciton is only valid in GCC compiler.
+     */    
+    fflush(stdout);
+}
+
+/*******************************************************************************
+* Function Name: logger_fatal
+********************************************************************************
+*
+* Summary:
+*  Print fatal information.
+*
+* Parameters:
+*  format: format string like 'printf'.
+*  ...: variable parameters.
+*
+* Returns:
+*  None
+*
+*
+*******************************************************************************/
+void logger_fatal(const char* format, ...)
+{
+    if (!hasLoggerInitialized) {
+        return;   
+    }
+    
+    if (loggerConfig.level < LOGGER_LEVEL_FATAL) {
+        return;   
+    }
+    
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);      /* printf perform at '\n' */
+    va_end(args);
+    
+    /* Print all data in buffer, even not ended with '\n'.
+     * Note, this funciton is only valid in GCC compiler.
+     */    
+    fflush(stdout);
+}
+
+/*******************************************************************************
+* Function Name: uart_setBaudRate
+********************************************************************************
+*
+* Summary:
+*  Set UART baud rate.
+*
+* Parameters:
+*  baudRate: UART baud rate.
+*
+* Returns:
+*  None
+*
+* Note:
+*  I only test 115200 and below, I hear from somewhere that BLE 042 Kit doesn't 
+*  support bigger baud rate as the limit of kitprog.
+*
+*******************************************************************************/
 int8 uart_setBaudRate(uart_baud_rate_t baudRate)
 {
     uint8  uartOverSampling = CyUart_UART_OVS_FACTOR;        /* CyUart_SPI_UART.h */
@@ -52,119 +317,107 @@ int8 uart_setBaudRate(uart_baud_rate_t baudRate)
     
     return 0;
 }
+
+/*******************************************************************************
+* Function Name: logger_init
+********************************************************************************
+*
+* Summary:
+*  Initialize logger system.
+*
+* Parameters:
+*  None
+*
+* Returns:
+*  None
+*
+*******************************************************************************/
 void logger_init(void)
 {
-    if (!hasLoggerInitialized) { 
-        UARTCLK_START();
-        
+    if (!hasLoggerInitialized) {  
+        /* Set baud rate */
         uart_setBaudRate(loggerConfig.baudRate);
+        
+        /* Start timer */
+        // TODO: it seems doesn't matter if not calling it!!??
+        UARTCLK_START();
+        /* Start SCB component */
         UART_START();
         
         hasLoggerInitialized = 1;
     }
 }
 
-void logger_start(uart_baud_rate_t baudRate, logger_level_t level)
-{
+/*******************************************************************************
+* Function Name: logger_start
+********************************************************************************
+*
+* Summary:
+*  Start logger system with logger level and baud rate.
+*
+* Parameters:
+*  level:  logger level.
+*  baudRate:  baud rate.
+*
+* Returns:
+*  None
+*
+*******************************************************************************/
+void logger_start(logger_level_t level, uart_baud_rate_t baudRate)
+{      
+    hasLoggerInitialized = 0;
+    
     loggerConfig.baudRate = baudRate;
-    loggerConfig.level = level;
-    loggerConfig.heapSize = CYDEV_HEAP_SIZE;
+    loggerConfig.level    = level;
+    loggerConfig.heapSize = CYDEV_HEAP_SIZE;        /* System heap size */
+    
+    logger.config   = loggerConfig;
+    logger.t        = logger_trace;
+    logger.e        = logger_error;
+    logger.f        = logger_fatal;    
+
+    /* Disable the logger. As SCB is not started, so it dosn't consume power */
+    if (level == LOGGER_LEVEL_DISABLE) {
+        return;
+    }
+    
+    /* printf function requires heap size being largger than 0x200 */
+    if (loggerConfig.heapSize < 0x200) {
+        UART_START();
+        /* Print error with original function */
+        UART_PUTS("ERROR: Heap size is not suitable.\r\n");
+        return;
+    }    
 
     logger_init();
-    
-    /* || loggerConfig.heapSize > 0x5BB */
-    if (loggerConfig.heapSize < 0x200) {
-        UART_PUTS("ERROR: Heap size is not suitable.\r\n");
-        CYASSERT(0);
-    }
 }
 
+/*******************************************************************************
+* Function Name: logger_stop
+********************************************************************************
+*
+* Summary:
+*  Stop logger system.
+*
+* Parameters:
+*  None
+*
+* Returns:
+*  None
+*
+* Note:
+*  I don't test this function as it's never used.
+*
+*******************************************************************************/
 void logger_stop(void)
 {
     if (hasLoggerInitialized) {
-        UART_STOP();
-        UARTCLK_STOP();
+        UART_STOP();            /* Stop SCB */
+        UARTCLK_STOP();         /* Stop SCB timer */
         
         hasLoggerInitialized = 0;
     }
 }
-
-void logger_byte(logger_data_type_t type, uint8 data)
-{
-    if (type == LOGGER_DATA_TYPE_DEC) {
-        UART_PUTC(data);
-    }
-    else if (type == LOGGER_DATA_TYPE_HEX) {
-        UART_PUTC(HEX_CHAR_TABLE[(data >> 4) & 0x0F]);
-        UART_PUTC(HEX_CHAR_TABLE[(data) & 0x0F]);
-    }
-    else if (type == LOGGER_DATA_TYPE_BIN) {
-        int8 i;
-        for (i = 7; i >= 0; i--) {
-            UART_PUTC((uint8)((data >> i) & 0x01) + '0');
-        }
-    }
-    else {}
-    
-    UART_BUSY;
-}
-
-void logger_array(logger_data_type_t type, const uint8* data, uint8 len, char seperator)
-{
-    uint8 i;
-    for (i = 0; i < len; i++) {
-        logger_byte(type, data[i]);
-        if (i != len - 1) {
-            UART_PUTC(seperator);
-        }
-    }
-}
-
-void logger_raw(logger_level_t level, const char* format, ...)
-{
-    if (!hasLoggerInitialized) {
-        return;   
-    }
-    
-    if (level > loggerConfig.level) {
-        return;   
-    }
-    
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
-    
-    UART_BUSY;
-}
-
-void logger_format(logger_level_t level, const char* file, const char* function, const char* format, ...)
-{    
-    if (!hasLoggerInitialized) {
-        return;   
-    }
-    
-    if (level > loggerConfig.level) {
-        return;   
-    }
-    
-    /* Print format text. */
-    UART_PUTC(LOGGER_LEVEL_PREAMBLE[level]);
-    UART_PUTS("|");
-    UART_PUTS(file);
-    UART_PUTS(">");
-    UART_PUTS(function);
-    UART_PUTS("(): ");
-    UART_BUSY;
-    
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-    va_end(args);
-    
-    UART_BUSY;
-}
-
 
 /**
  * Required by printf function. 
@@ -177,6 +430,8 @@ int _write(int file, char *ptr, int len)
     for (i = 0; i < len; i++) {
         UART_PUTC(*ptr++);
     }
+    
+    UART_BUSY;
     return len;
 }
 
