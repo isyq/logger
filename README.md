@@ -64,3 +64,7 @@ That's all. Please check main.c for reference.
 ## Note:
 
 Heap size should be largger than 0x200, otherwise system can't work well since the core function is vprintf which requires a big heap size.
+
+I set over-sampling parameter to 10 from 12 of SCB component, to fit for most baud rates.
+
+I set IMO to 24 MHz as some special reasons, it should also OK for other frequency. I don't test them. :-)
