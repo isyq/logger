@@ -364,9 +364,9 @@ void logger_init(void)
 *
 *******************************************************************************/
 void logger_start(logger_level_t level, uart_baud_rate_t baudRate)
-{      
+{         
     hasLoggerInitialized = 0;
-    
+
     loggerConfig.baudRate = baudRate;
     loggerConfig.level    = level;
     loggerConfig.heapSize = CYDEV_HEAP_SIZE;        /* System heap size */
@@ -381,15 +381,26 @@ void logger_start(logger_level_t level, uart_baud_rate_t baudRate)
         return;
     }
     
+    _Bool heapSizeInsufficient = 0;
+    
     /* printf function requires heap size being largger than 0x200 */
     if (loggerConfig.heapSize < 0x200) {
-        UART_START();
-        /* Print error with original function */
-        UART_PUTS("ERROR: Heap size is not suitable.\r\n");
-        return;
-    }    
+        heapSizeInsufficient = 1;
+        logger.config.baudRate = UART_BAUD_RATE_115200; /* Used for print error */
+    }
 
     logger_init();
+    
+    if (heapSizeInsufficient) {
+        /* Print error with original function */
+        UART_PUTS("ERROR: Heap size is insufficient, set it to 0x200 or more.\r\n");
+        UART_BUSY;              /* Make sure all data in buffer is sent */
+        
+        UART_STOP();            /* Stop SCB */
+        UARTCLK_STOP();         /* Stop SCB timer */
+
+        hasLoggerInitialized = 0;
+    }
 }
 
 /*******************************************************************************
