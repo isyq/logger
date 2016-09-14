@@ -12,28 +12,24 @@
 #include <project.h>
 #include "../src/logger.h"
 #include <stdio.h>
-#define N 10
 
 int main()
 {
     CyGlobalIntEnable;
     
-    logger_start(LOGGER_LEVEL_DEBUG, UART_BAUD_RATE_115200);
-    
-    logger.t("Array Data(len = %d): ", N);
-    uint8 testData[N];
-    uint16 i;
-    for (i = 0; i < N; i++) {
-        testData[i] = i+1;   
-    }
-    logger_array(testData, N);  /* No need to add \r\n anymore */
-    
+    logger.start(LOGGER_LEVEL_DEBUG, UART_BAUD_RATE_115200);
+	
     logger.t("Trace: This is most frequently used.\r\n");
     logger.e("Error: Capture an error.\r\n");
-    logger.e("Fatal: Trigger a fatal error!\r\n");
-    p("It's a debug information\r\n");
-    p("It's a debug information too\r\n");
-    
+    logger.f("Fatal: Trigger a fatal error!\r\n");
+	
+    logger.t("\r\nArray Data(len = %d): ", 10);
+    uint8 testData[10] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'};
+	logger.list(testData, 10);
+	
+	p("\r\nIt's a clean debug log.\r\n");
+    d("It's a debug log with extra information.\r\n");  
+	
     
     for(;;)
     {

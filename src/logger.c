@@ -20,7 +20,21 @@
 static _Bool            hasLoggerInitialized;   /* Ensure logger is initialized only once */
 static logger_config_t  loggerConfig;           /* Global config variable */
 
-logger_t    logger;                             /* Global logger */
+
+void logger_start(logger_level_t level, uart_baud_rate_t baudRate);
+void logger_fatal(const char* format, ...);
+void logger_error(const char* format, ...);
+void logger_trace(const char* format, ...);
+void logger_array(const uint8* data, uint16 len);
+
+logger_t    logger = {
+    .config   = &loggerConfig,
+    .t        = logger_trace,
+    .e        = logger_error,
+    .f        = logger_fatal,
+	.start    = logger_start,
+	.list     = logger_array,
+};                             /* Global logger */
 
 /* Nibble of a char */
 const char HEX_CHAR_TABLE[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F',};
@@ -112,6 +126,60 @@ void logger_raw(logger_level_t level, const char* format, ...)
 }
 
 /*******************************************************************************
+* Function Name: logger_printUint32
+********************************************************************************
+*
+* Summary:
+*  Print a uint32 data as decimal.
+*
+* Parameters:
+*  data: a decimal data.
+*
+* Returns:
+*  None
+*
+*
+*******************************************************************************/
+void logger_printUint32(uint32 data)
+{
+	char char_table[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+	uint32 int_len[] = {
+		1000000000,
+		100000000,
+		10000000,
+		1000000,
+		100000,
+		10000,
+		1000,
+		100,
+		10,
+		1,
+	};
+	uint32 d = data;		/* Temp data */
+	uint8  i, j;			/* Loop variable */
+	uint8  data_len = 0;	/* Data bit length */
+
+	if (data < 10) {
+		UART_PUTC(char_table[data]);	
+		return;
+	}	
+	
+	/* Find input data length */
+	for (i = 0; i < 10; i++) {
+		if (d >= int_len[i]) {
+			data_len = 10 - i;	
+			break;
+		}
+	}
+	
+	/* Print each bit */
+	for (j = 0; j < data_len; j++) {
+		UART_PUTC(char_table[d / int_len[i + j]]);
+		d = d % int_len[i + j];	
+	}
+}
+
+/*******************************************************************************
 * Function Name: logger_format
 ********************************************************************************
 *
@@ -122,6 +190,7 @@ void logger_raw(logger_level_t level, const char* format, ...)
 *  level: logger level.
 *  file: file where calling this function.
 *  function: function where calling this API.
+*  line: code line.
 *  format: format string like 'printf'.
 *  ...: variable parameters.
 *
@@ -130,7 +199,7 @@ void logger_raw(logger_level_t level, const char* format, ...)
 *
 *
 *******************************************************************************/
-void logger_format(logger_level_t level, const char* file, const char* function, const char* format, ...)
+void logger_format(logger_level_t level, const char* file, const char* function, uint32 line, const char* format, ...)
 {    
     if (!hasLoggerInitialized) {
         return;   
@@ -141,10 +210,14 @@ void logger_format(logger_level_t level, const char* file, const char* function,
     }
     
     /* Print format text. */
+	UART_PUTS("[");
     UART_PUTS(file);
-    UART_PUTS("->");
+    UART_PUTS("|");
     UART_PUTS(function);
-    UART_PUTS("(): ");
+    UART_PUTS("()");
+    UART_PUTS("|L");
+	logger_printUint32(line);
+	UART_PUTS("] ");
     UART_BUSY;
     
     va_list args;
@@ -371,10 +444,7 @@ void logger_start(logger_level_t level, uart_baud_rate_t baudRate)
     loggerConfig.level    = level;
     loggerConfig.heapSize = CYDEV_HEAP_SIZE;        /* System heap size */
     
-    logger.config   = loggerConfig;
-    logger.t        = logger_trace;
-    logger.e        = logger_error;
-    logger.f        = logger_fatal;    
+ 
 
     /* Disable the logger. As SCB is not started, so it dosn't consume power */
     if (level == LOGGER_LEVEL_DISABLE) {
@@ -386,7 +456,7 @@ void logger_start(logger_level_t level, uart_baud_rate_t baudRate)
     /* printf function requires heap size being largger than 0x200 */
     if (loggerConfig.heapSize < 0x200) {
         heapSizeInsufficient = 1;
-        logger.config.baudRate = UART_BAUD_RATE_115200; /* Used for print error */
+        loggerConfig.baudRate = UART_BAUD_RATE_115200; /* Used for print error */
     }
 
     logger_init();

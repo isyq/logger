@@ -1,7 +1,5 @@
 # logger
-A log system for PSoC project.
-
-
+A log4j like system for PSoC project.
 
 ## Feature:
 
@@ -17,54 +15,71 @@ A log system for PSoC project.
 
    LOGGER_LEVEL_DISABLE will disable all message display, and even don't start SCB component, which is useful in the final firmware of those power sensitive systems.
 
-   LOGGER_LEVEL_DEBUG will enable all levels of message. It's used frequently.
+   LOGGER_LEVEL_TRACE will enable TRACE, ERROR and FATAL messages.
+
+   LOGGER_LEVEL_DEBUG will enable all levels of messages. 
 
    Of course, you can add more levels as per your requirement.
 
 2. Dynamical baud rate configuration
 
-   Assign baud rate in API logger_start().
+   Use an external clock component to enable set baud rate in the run-time. The baud rate is assigned in logger.start() API.
 
-   All baud rates supported in SCB component are supported here.
+   All baud rates supported in SCB component should be supported here.
 
-3. `Printf` syntax
+3. `Printf` like syntax
 
    This system uses the same syntax like standard printf function. 
 
-   Resolving '\n' issue of printf function.
+4. `p()` and `d()` macro
 
-4. `p()` macro
+   d() will print out the file path, function name and line number of the caller. p() is a wrapper of printf.
 
-   This macro is useful when debugging code. It will print out the file path and function name of the target.
-
-   It's easy to add line number in this function if required.
-
-5. Good error prompt
+5. Error prompt
 
    Don't have to put up with heap size, messy code issues.
 
 
 ## Usage:
 
-1. Copy SCB and clock components to your own project, make sure the names are not changed. (You can change them as per your project, only need to fix some macro name errors happen in logger.h)
-
-2. Include logger.h in your file and start logger system via `logger_start` function, with logger level and uart baud rate.
-
+1. Copy SCB and clock components to your own project.
+2. Include logger.h and start it via `logger.start` function.
 3. Print trace message via `logger.t`, error message via `logger.e`, fatal message via `logger.f`. 
+4. Print array data via `logger.array`, this function is ended with '\r\n'. 
+5. Print debug information via `d` or `p` macro. 
 
-4. Print array data via `logger_array`, this function is ended with '\r\n'. Print debug information via `p` macro. 
 
+That's all. 
 
-That's all. Please check main.c for reference.
+## Test
 
-## Screenshot
+Try to run below code:
+
+```C
+    CyGlobalIntEnable;
+    
+    logger.start(LOGGER_LEVEL_DEBUG, UART_BAUD_RATE_115200);
+	
+    logger.t("Trace: This is most frequently used.\r\n");
+    logger.e("Error: Capture an error.\r\n");
+    logger.f("Fatal: Trigger a fatal error!\r\n");
+	
+    logger.t("\r\nArray Data(len = %d): ", 10);
+    uint8 testData[10] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'};
+	logger.list(testData, 10);
+	
+	p("\r\nIt's a clean debug log.\r\n");
+    d("It's a debug log with extra information.\r\n");  
+```
+
+Get the output in the UART terminal like below:
 
 ![Test result](./test result.png)
 
 ## Note:
 
-Heap size should be largger than 0x200, otherwise system can't work well since the core function is vprintf which requires a big heap size.
+It require global interrupt enabled, so make sure `CyGlobalIntEnable` is called before printing.
 
-I set over-sampling parameter to 10 from 12 of SCB component, to fit for most baud rates.
+Heap size should be largger than 0x200, which is required by vprintf.
 
-I set IMO to 24 MHz as some special reasons, it should also OK for other frequency. I don't test them. :-)
+The over-sampling parameter of SCB component is set to 10 from 12, in order to fit most baud rates.
