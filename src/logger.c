@@ -20,11 +20,12 @@
 static _Bool            hasLoggerInitialized;   /* Ensure logger is initialized only once */
 static logger_config_t  loggerConfig;           /* Global config variable */
 
-
+/* Function declaration */
 void logger_start(logger_level_t level, uart_baud_rate_t baudRate);
 void logger_fatal(const char* format, ...);
 void logger_error(const char* format, ...);
 void logger_trace(const char* format, ...);
+void logger_debug(const char* format, ...);
 void logger_array(const uint8* data, uint16 len);
 
 logger_t    logger = {
@@ -32,6 +33,7 @@ logger_t    logger = {
     .t        = logger_trace,
     .e        = logger_error,
     .f        = logger_fatal,
+    .d        = logger_debug,
 	.start    = logger_start,
 	.list     = logger_array,
 };                             /* Global logger */
@@ -78,6 +80,7 @@ void logger_array(const uint8* data, uint16 len)
         if (i != len - 1) {
             UART_PUTC(seperator);
         }
+        UART_BUSY;                  /* Prevent being stuck in some cases */
     }
 
     UART_PUTC('\r');
@@ -229,6 +232,43 @@ void logger_format(logger_level_t level, const char* file, const char* function,
      * Note, this funciton is only valid in GCC compiler.
      */
     fflush(stdout);
+}
+
+/*******************************************************************************
+* Function Name: logger_debug
+********************************************************************************
+*
+* Summary:
+*  Print debug information.
+*
+* Parameters:
+*  format: format string like 'printf'.
+*  ...: variable parameters.
+*
+* Returns:
+*  None
+*
+*
+*******************************************************************************/
+void logger_debug(const char* format, ...)
+{
+    if (!hasLoggerInitialized) {
+        return;   
+    }
+    
+    if (loggerConfig.level < LOGGER_LEVEL_DEBUG) {
+        return;   
+    }
+    
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);      /* printf perform at '\n' */
+    va_end(args);
+    
+    /* Print all data in buffer, even not ended with '\n'.
+     * Note, this funciton is only valid in GCC compiler.
+     */
+    fflush(stdout); 
 }
 
 /*******************************************************************************

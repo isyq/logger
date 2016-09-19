@@ -12,12 +12,13 @@ A log4j like system for PSoC project.
    - LOGGER_LEVEL_ERROR
    - LOGGER_LEVEL_TRACE
    - LOGGER_LEVEL_DEBUG
+   - LOGGER_LEVEL_ALL
 
    LOGGER_LEVEL_DISABLE will disable all message display, and even don't start SCB component, which is useful in the final firmware of those power sensitive systems.
 
    LOGGER_LEVEL_TRACE will enable TRACE, ERROR and FATAL messages.
 
-   LOGGER_LEVEL_DEBUG will enable all levels of messages. 
+   LOGGER_LEVEL_ALL will enable all levels of messages. 
 
    Of course, you can add more levels as per your requirement.
 
@@ -31,7 +32,7 @@ A log4j like system for PSoC project.
 
    This system uses the same syntax like standard printf function. 
 
-4. `p()` and `d()` macro
+4. `p()` and `i()` macro
 
    d() will print out the file path, function name and line number of the caller. p() is a wrapper of printf.
 
@@ -44,9 +45,9 @@ A log4j like system for PSoC project.
 
 1. Copy SCB and clock components to your own project.
 2. Include logger.h and start it via `logger.start` function.
-3. Print trace message via `logger.t`, error message via `logger.e`, fatal message via `logger.f`. 
-4. Print array data via `logger.array`, this function is ended with '\r\n'. 
-5. Print debug information via `d` or `p` macro. 
+   1. Print debug message via `logger.d`, trace message via `logger.t`, error message via `logger.e`, fatal message via `logger.f`. 
+3. Print array data via `logger.list`, this function is ended with '\r\n'. 
+4. Print debug information via `i` or `p` macro. 
 
 
 That's all. 
@@ -60,16 +61,17 @@ Try to run below code:
     
     logger.start(LOGGER_LEVEL_DEBUG, UART_BAUD_RATE_115200);
 	
+    logger.d("Debug: It's a debug message.\r\n");
     logger.t("Trace: This is most frequently used.\r\n");
     logger.e("Error: Capture an error.\r\n");
     logger.f("Fatal: Trigger a fatal error!\r\n");
 	
     logger.t("\r\nArray Data(len = %d): ", 10);
     uint8 testData[10] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'};
-	logger.list(testData, 10);
+    logger.list(testData, 10);
 	
 	p("\r\nIt's a clean debug log.\r\n");
-    d("It's a debug log with extra information.\r\n");  
+    i("It's a debug log with extra information.\r\n");  
 ```
 
 Get the output in the UART terminal like below:

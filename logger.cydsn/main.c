@@ -19,6 +19,7 @@ int main()
     
     logger.start(LOGGER_LEVEL_DEBUG, UART_BAUD_RATE_115200);
 	
+    logger.d("Debug: It's a debug message.\r\n");
     logger.t("Trace: This is most frequently used.\r\n");
     logger.e("Error: Capture an error.\r\n");
     logger.f("Fatal: Trigger a fatal error!\r\n");
@@ -28,7 +29,7 @@ int main()
 	logger.list(testData, 10);
 	
 	p("\r\nIt's a clean debug log.\r\n");
-    d("It's a debug log with extra information.\r\n");  
+    i("It's a debug log with extra information.\r\n");  
 	
     
     for(;;)

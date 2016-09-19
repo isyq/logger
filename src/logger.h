@@ -49,6 +49,7 @@ typedef enum {
     LOGGER_LEVEL_ERROR,
     LOGGER_LEVEL_TRACE,
     LOGGER_LEVEL_DEBUG,
+    LOGGER_LEVEL_ALL,
 } logger_level_t;
 
 typedef struct {
@@ -61,6 +62,7 @@ typedef void (*logger_callback)(const char* format, ...);
 
 typedef struct {
     logger_config_t *config;
+    logger_callback d;
     logger_callback t;
     logger_callback e;
     logger_callback f;
@@ -74,7 +76,7 @@ extern logger_t     logger;
 void logger_raw(logger_level_t level, const char* format, ...);
 void logger_format(logger_level_t level, const char* file, const char* function, uint32 line, const char* format, ...);
 /* This is for debug use */
-#define d(...)      logger_format(LOGGER_LEVEL_DEBUG, __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#define i(...)      logger_format(LOGGER_LEVEL_DEBUG, __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
 #define p(...)      logger_raw(LOGGER_LEVEL_DEBUG, __VA_ARGS__)
 
 #endif /* __LOGGER_H__ */
